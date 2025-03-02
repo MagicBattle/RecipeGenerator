@@ -1,9 +1,13 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import openai
 import os
 import googleapiclient.discovery
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for frontend communication
+
+# API Keys stored as environment variables on Render
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
@@ -11,9 +15,8 @@ client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 prompt = ("You are RecipeGPT. You are tasked with generating multiple foods that can be created with a given ingredients list. "
           "The user will input multiple ingredients and you must return multiple food items that can be created with ONLY the items listed. "
-          "If there are no foods that can be created because the user inputted too little ingredients, inform them. "
+          "If there are no foods that can be created because the user inputted too few ingredients, inform them. "
           "Provide a simple error message indicating what the user did wrong. Respond ONLY in JSON format.")
-
 
 @app.route('/recipes', methods=['POST'])
 def get_recipes():
@@ -32,10 +35,9 @@ def get_recipes():
                 {"role": "user", "content": ingredients}
             ]
         )
-        return jsonify(completion.choices[0].message.content)
+        return jsonify({"recipes": completion.choices[0].message.content})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route('/youtube', methods=['GET'])
 def get_youtube():
@@ -66,10 +68,9 @@ def get_youtube():
             }
             for item in response["items"]
         ]
-        return jsonify(videos)
+        return jsonify({"videos": videos})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)

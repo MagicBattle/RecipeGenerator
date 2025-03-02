@@ -2,15 +2,21 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import openai
 import os
+import json
 import googleapiclient.discovery
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS to allow frontend requests
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
-client = openai.OpenAI(api_key=OPENAI_API_KEY)  
+if not OPENAI_API_KEY:
+    raise ValueError("Missing OpenAI API Key!")
+if not YOUTUBE_API_KEY:
+    raise ValueError("Missing YouTube API Key!")
+
+client = openai.Client(api_key=OPENAI_API_KEY)
 
 prompt = ("You are RecipeGPT. You are tasked with generating multiple foods that can be created with a given ingredients list. "
           "The user will input multiple ingredients and you must return multiple food items that can be created with ONLY the items listed. "
@@ -19,7 +25,6 @@ prompt = ("You are RecipeGPT. You are tasked with generating multiple foods that
 
 @app.route('/recipes', methods=['POST'])
 def get_recipes():
-    """Handles recipe generation requests"""
     data = request.get_json()
     ingredients = data.get("ingredients", "")
 
@@ -35,10 +40,8 @@ def get_recipes():
             ]
         )
 
-        # Fix: Ensure the response is valid JSON
         response_text = completion.choices[0].message.content.strip()
 
-        # Ensure it returns valid JSON, not a formatted string
         if response_text.startswith("```json"):
             response_text = response_text.replace("```json", "").replace("```", "").strip()
 
@@ -47,10 +50,8 @@ def get_recipes():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/youtube', methods=['GET'])
 def get_youtube():
-    """Handles YouTube video searches"""
     subject = request.args.get("subject", "")
     
     if not subject:
@@ -80,7 +81,6 @@ def get_youtube():
         return jsonify(videos)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)

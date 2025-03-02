@@ -52,23 +52,23 @@ def get_recipes():
 
 @app.route('/youtube', methods=['GET'])
 def get_youtube():
-    subject = request.args.get("subject", "")
-    
-    if not subject:
-        return jsonify({"error": "No search term provided."}), 400
-
-    youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
-    
-    request = youtube.search().list(
-        part='snippet',
-        q=subject,
-        maxResults=3,
-        order="relevance",
-        type="video"
-    )
-    
     try:
-        response = request.execute()
+        subject = request.args.get("subject", "")
+
+        if not subject:
+            return jsonify({"error": "No search term provided."}), 400
+
+        youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+        
+        yt_request = youtube.search().list(
+            part='snippet',
+            q=subject,
+            maxResults=3,
+            order="relevance",
+            type="video"
+        )
+
+        response = yt_request.execute()
         videos = [
             {
                 "title": item["snippet"]["title"],
@@ -76,15 +76,17 @@ def get_youtube():
                 "url": f"https://www.youtube.com/watch?v={item['id']['videoId']}",
                 "thumbnail": item["snippet"]["thumbnails"]["high"]["url"]
             }
-            for item in response["items"]
+            for item in response.get("items", [])
         ]
+
         return jsonify(videos)
+    
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print("YouTube API Error:", str(e))  # Logs the error in Render logs
+        return jsonify({"error": f"Server Error: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
-
 
 
 ### EXAMPLE RESPONSE: ###

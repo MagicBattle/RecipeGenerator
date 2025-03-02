@@ -1,7 +1,7 @@
 function getRecipes() {
     const ingredients = document.getElementById('ingredients').value;
 
-    fetch("https://your-app.onrender.com/recipes", {
+    fetch("https://recipegeneratorg.onrender.com", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients })

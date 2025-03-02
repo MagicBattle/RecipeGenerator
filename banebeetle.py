@@ -59,7 +59,7 @@ def get_youtube():
             return jsonify({"error": "No search term provided."}), 400
 
         youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
-        
+
         yt_request = youtube.search().list(
             part='snippet',
             q=subject,
@@ -80,7 +80,7 @@ def get_youtube():
         ]
 
         return jsonify(videos)
-    
+
     except Exception as e:
         print("YouTube API Error:", str(e))  # Logs the error in Render logs
         return jsonify({"error": f"Server Error: {str(e)}"}), 500
